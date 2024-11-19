@@ -16,7 +16,7 @@ function loadTicTacToe() {
   document.body.innerHTML = `
     <div style="display: flex; flex-direction: column; align-items: center; margin-top: 50px; color: white;">
       <h2>Tic-Tac-Toe</h2>
-      <p>(2-player mode)</p>
+      <p>(Player X vs AI O)</p>
       <div id="ticTacToeBoard" style="
         display: grid;
         grid-template-columns: repeat(3, 100px);
@@ -53,23 +53,90 @@ function loadTicTacToe() {
 }
 
 function makeMove(index) {
-  if (!gameActive || board[index] !== null) return;
+  if (!gameActive || board[index] !== null || currentPlayer !== "X") return;
 
-  // Update board state and UI
+  // Player X makes a move
   board[index] = currentPlayer;
   document.getElementsByClassName("tic-tac-toe-cell")[index].innerText = currentPlayer;
 
-  // Check for win or draw
   if (checkWin()) {
     document.getElementById("gameStatus").innerText = `Player ${currentPlayer} wins!`;
     gameActive = false;
-  } else if (board.every((cell) => cell !== null)) {
+    return;
+  }
+
+  if (board.every((cell) => cell !== null)) {
     document.getElementById("gameStatus").innerText = "It's a draw!";
     gameActive = false;
-  } else {
-    // Switch player
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
-    document.getElementById("gameStatus").innerText = `Player ${currentPlayer}'s turn`;
+    return;
+  }
+
+  // Switch to AI
+  currentPlayer = "O";
+  document.getElementById("gameStatus").innerText = `Player ${currentPlayer}'s turn`;
+  setTimeout(aiMove, 500); // AI takes a moment to think
+}
+
+function aiMove() {
+  if (!gameActive) return;
+
+  const bestMove = findBestMove();
+  board[bestMove] = currentPlayer;
+  document.getElementsByClassName("tic-tac-toe-cell")[bestMove].innerText = currentPlayer;
+
+  if (checkWin()) {
+    document.getElementById("gameStatus").innerText = `Player ${currentPlayer} wins!`;
+    gameActive = false;
+    return;
+  }
+
+  if (board.every((cell) => cell !== null)) {
+    document.getElementById("gameStatus").innerText = "It's a draw!";
+    gameActive = false;
+    return;
+  }
+
+  currentPlayer = "X";
+  document.getElementById("gameStatus").innerText = `Player ${currentPlayer}'s turn`;
+}
+
+function findBestMove() {
+  // Check for winning move
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) {
+      board[i] = "O";
+      if (checkWin()) {
+        board[i] = null;
+        return i;
+      }
+      board[i] = null;
+    }
+  }
+
+  // Check for blocking move
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) {
+      board[i] = "X";
+      if (checkWin()) {
+        board[i] = null;
+        return i;
+      }
+      board[i] = null;
+    }
+  }
+
+  // Take center if available
+  if (board[4] === null) return 4;
+
+  // Take a corner if available
+  const corners = [0, 2, 6, 8];
+  for (let corner of corners) {
+    if (board[corner] === null) return corner;
+  }
+
+  // Take any remaining spot
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) return i;
   }
 }
 
